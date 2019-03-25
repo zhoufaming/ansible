@@ -1,0 +1,12 @@
+TaskQueueManager需要Inventory(节点仓库)，variable_manager(收集变量),options(命令行中指定的参数),stdout_callback(回调函数)
+
+在task_queue_manager.py中找到run中
+初始化时会设置队列
+会根据options，，variable_manager，passwords等信息设置成一个PlayContext信息(playbooks/playcontext.py)
+设置插件(plugins)信息callback_loader(回调), strategy_loader(执行策略), module_loader(任务模块)
+通过strategy_loader（strategy插件）的run（默认的strategy类型是linear，线性执行），去按照顺序执行所有的任务（执行一个模块，可能会执行多个任务）
+在strategy_loader插件run之后，会判断action类型。如果是meta类型的话会单独执行(不是具体的ansible模块时)，而其他模块时，会加载到队列_queue_task
+在队列中会调用WorkerProcess去处理，在workerproces实际的run之后，会使用TaskExecutor进行执行
+在TaskExecutor中会设置connection插件，并且根据task的类型（模块。或是include等）获取action插件，就是对应的模块，如果模块有自定义的执行，则会执行自定义的action，如果没有的会使用normal或者async，这个是根据是否是任务的async属性来决定
+在Action插件中定义着执行的顺序，及具体操作，例如生成临时目录，生成临时脚本，所以要在统一的模式下，集成一些额外的处理时，可以重写Action的方法
+通过Connection插件来执行Action的各个操作步骤
