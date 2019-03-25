@@ -1,0 +1,64 @@
+#创建并管理inventory---add_hosts、get_hosts、get_groups......
+inventory = InventoryManager(loader=loader, sources=/path/files/inventory)
+
+#管理所有变量---配置文件变量、inventory变量、hosts文件变量、其它变量
+variable_manager = VariableManager(loader=loader, inventory=inventory)
+
+#创建一个回调类用于执行结果的格式化输出（继承于CallbackBase）
+callback = ResultsCollector()
+
+#初始化playbook执行体
+pd = PlaybookExecutor(
+        playbooks=playbooks,
+        inventory=inventory,
+        variable_manager=variable_manager,
+        loader=loader,
+        options=options,
+        passwords=None,
+        )
+    #创建了一个self._final_q = multiprocessing.Queue()分布式队列
+    pd._tqm = TaskQueueManager(inventory=inventory, variable_manager=variable_manager, loader=loader, options=options, passwords=self.passwords)
+
+#绑定回调类
+pd._tqm._stdout_callback = callback
+
+#执行playbook
+pd.run()
+    #/usr/lib/python2.7/site-packages/ansible/executor/playbook_executor.py
+    #加载playbook（包含yml中具体的内容）
+    pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)
+    #加载回调类
+    self._tqm.load_callbacks()
+    #返回一个列表[{{ hosts }}]即 pd中的属性_entries
+    plays = pb.get_plays()
+    #获取所有的变量 (for play in plays)
+    all_vars = self._variable_manager.get_vars(play=play)
+    #根据变量创建模板
+    templar = Templar(loader=self._loader, variables=all_vars)
+    #替换掉playbook中所有的模板变量成值
+    play.post_validate(templar)
+    #运行
+    result = self._tqm.run(play=play)
+        #/usr/lib/python2.7/site-packages/ansible/executor/task_queue_manager.py
+        #当一些任务可能会覆盖一些连接或认证的信息的情况下，在一个剧本和子任务中 这个类被用于固定主机的连接信息
+        play_context = PlayContext(new_play, self._options, self.passwords, self._connection_lockfile.fileno())
+        #创建一个迭代器用于迭代任务
+        iterator = PlayIterator(
+            inventory=self._inventory,
+            play=new_play,
+            play_context=play_context,
+            variable_manager=self._variable_manager,
+            all_vars=all_vars,
+            start_at_done=self._start_at_done,
+        )
+        #初始化进程数为forks数和主机数中的最小值 forks在2.4后必须得设置否者会报错
+        self._initialize_processes(min(self._options.forks, iterator.batch_size))
+        #获取执行策略默认liner
+         strategy = strategy_loader.get(new_play.strategy, self)
+        #执行任务
+        play_return = strategy.run(iterator, play_context)
+            #/usr/lib/python2.7/site-packages/ansible/plugins/strategy/linear.py
+        
+
+    
+
