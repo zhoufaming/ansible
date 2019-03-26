@@ -62,6 +62,12 @@ pd.run()
         #执行任务
         play_return = strategy.run(iterator, play_context)
             #/usr/lib/python2.7/site-packages/ansible/plugins/strategy/linear.py
+            #获取要执行的主机
+            hosts_left = self.get_hosts_left(iterator)
+            #获取task任务列表元组[(host,task),...]
+            host_tasks = self._get_next_task_lockstep(hosts_left, iterator)
+            #获取task_vars
+            task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task)
         
 
     
