@@ -25,12 +25,16 @@ pd._tqm._stdout_callback = callback
 #执行playbook
 pd.run()
     #/usr/lib/python2.7/site-packages/ansible/executor/playbook_executor.py
-    #加载playbook（包含yml中具体的内容）
+    #加载playbook（包含include中的yml中具体内容）类Playbook初始化entries=[{{ hosts }}]、playbook目录地址basedir=/etc/ansible/playbook/path
+    #filename=/etc/ansible/playbook/path/*.yml
+    #load是一个静态方法，用Playbook类创建了一个实例，并用实例方法_load_playbook_data加载playbook
     pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)
     #加载回调类
     self._tqm.load_callbacks()
-    #返回一个列表[{{ hosts }}]即 pd中的属性_entries
+    #返回一个列表[{{ hosts }}]即 pd中的属性_entries，其中包含了所有的信息---主机、variable_manager、playbook
     plays = pb.get_plays()
+    #设置self的_loader._basedir值，即是外层pd中的_loader._basedir值为/etc/ansible/playbook/path
+    self._loader.set_basedir(pb._basedir)
     #获取所有的变量 (for play in plays)
     all_vars = self._variable_manager.get_vars(play=play)
     #根据变量创建模板
